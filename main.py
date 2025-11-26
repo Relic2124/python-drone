@@ -15,6 +15,11 @@ UUID_FBL770_SPP_NOTIFY = "0000fff2-0000-1000-8000-00805f9b34fb"
 UUID_FBL770_INIT_SETTING = "0000ffc1-0000-1000-8000-00805f9b34fb"
 UUID_CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb"
 
+speed = 10
+
+# 미세 보정
+rollDiff = 0 #(왼쪽-/오른쪽+)
+pitchDiff = 0 #(뒤-/앞+)
 
 async def main():
     # 1. 드론 장치 스캔
@@ -98,10 +103,13 @@ async def main():
         print("  Throttle: 0-255")
         print("=" * 50 + "\n")
 
+        mid = 100 # 중앙값
+        rollMid = mid + rollDiff
+        pitchMid =  mid + pitchDiff
         # 안드로이드 앱과 동일한 초기값
-        roll = 100  # 중앙값
-        pitch = 100
-        yaw = 100
+        roll = rollMid
+        pitch = pitchMid
+        yaw = mid
         throttle = 0
 
         # 조종값 변경 함수
@@ -162,43 +170,44 @@ async def main():
         # 조종값을 한 줄로 표시하기 위한 변수
         last_status_line = ""
 
+
+        is_resetting = False
+        THROTTLE_DECAY_RATE = 1
+        cnt = 0
         try:
             while True:
                 # Windows에서 비동기 키 입력 확인
                 if msvcrt.kbhit():
                     key = msvcrt.getch().decode("utf-8").lower()
 
-                    if key == "w":
-                        pitch = clamp(pitch + 1, 1, 200)
-                    elif key == "s":
-                        pitch = clamp(pitch - 1, 1, 200)
-                    elif key == "a":
-                        roll = clamp(roll - 1, 1, 200)
-                    elif key == "d":
-                        roll = clamp(roll + 1, 1, 200)
-                    elif key == "q":
-                        yaw = clamp(yaw - 1, 1, 200)
-                    elif key == "e":
-                        yaw = clamp(yaw + 1, 1, 200)
-                    elif key == " ":  # Space
+                    if key == "w": pitch = clamp(pitchMid + speed, 1, 200)
+                    elif key == "s": pitch = clamp(pitchMid - speed, 1, 200)
+                    else: pitch = pitchMid
+                    if key == "a": roll = clamp(rollMid - speed, 1, 200)
+                    elif key == "d": roll = clamp(rollMid + speed, 1, 200)
+                    else: roll = rollMid
+                    if key == "q": yaw = clamp(mid - speed, 1, 200)
+                    elif key == "e": yaw = clamp(mid + speed, 1, 200)
+                    else: yaw = mid
+
+                    if key == " ":  # Space
                         throttle = clamp(throttle + 5, 0, 255)
                     elif (
                         key == "\x08" or key == "x"
                     ):  # Backspace 또는 X (Throttle 감소)
                         throttle = clamp(throttle - 5, 0, 255)
                     elif key == "r":
-                        roll = 100
-                        pitch = 100
-                        yaw = 100
-                        throttle = 0
-                        print("\n리셋 완료!")
+                        roll = rollMid
+                        pitch = pitchMid
+                        yaw = mid
+                        is_resetting = True
                     elif key == "p":
                         print_status()
                         continue
                     elif key == "\x03" or key == "\x1b":  # Ctrl+C or ESC
                         print("\n종료 중...")
                         break
-                    else:
+                    elif key not in 'wsadqe':
                         # 알 수 없는 키는 무시
                         continue
 
@@ -207,6 +216,15 @@ async def main():
                     # 이전 줄을 지우고 새 줄 출력 (\r 사용)
                     print(f"\r{status_line}", end="", flush=True)
                     last_status_line = status_line
+
+                if is_resetting:
+                    if throttle > 0:
+                        cnt += 1
+                        if cnt&1: throttle = clamp(throttle - THROTTLE_DECAY_RATE, 0, 255)
+                    else:
+                        is_resetting = False
+                        cnt = 0
+                        print("리셋 완료")
 
                 # 주기적으로 현재 상태 표시 (1초마다)
                 await asyncio.sleep(0.01)  # CPU 사용량 줄이기
