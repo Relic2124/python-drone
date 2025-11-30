@@ -344,13 +344,25 @@ class VideoStreamReceiver:
     def process_frame(self, frame):
         """
         AI 처리를 위한 프레임 처리 함수
-        여기에 YOLO, 객체 인식 등의 AI 모델을 추가하세요
+        YOLO 객체 인식 및 자율주행 로직을 적용합니다.
         """
-        # 예시: 그레이스케일 변환
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # 자율주행 모듈이 있으면 사용
+        if hasattr(self, "autonomous_nav") and self.autonomous_nav:
+            # 객체 감지
+            detections = self.autonomous_nav.detect_objects(frame)
 
-        # 여기에 AI 처리 코드 추가
-        # 예: YOLO 객체 인식, 경로 계획 등
+            # 감지 결과를 프레임에 그리기
+            frame = self.autonomous_nav.draw_detections(frame, detections)
+
+            # 자율주행 조종 명령 생성 (별도 스레드에서 처리)
+            if hasattr(self, "control_command_queue"):
+                obstacles = self.autonomous_nav.filter_obstacles(detections)
+                if obstacles or True:  # 항상 명령 생성 (장애물이 없어도 직진)
+                    command = self.autonomous_nav.generate_control_command(frame)
+                    try:
+                        self.control_command_queue.put_nowait(command)
+                    except:
+                        pass  # 큐가 가득 찬 경우 무시
 
         return frame
 
