@@ -112,7 +112,7 @@ async def main():
             if target_x == target_y == -1: return
             nonlocal throttle, roll, pitch, prev_error_x, prev_error_y
             global pre_target_x, pre_target_y
-            throttle = 115  # 주의: 베터리 100%일 때, throttle 120 이상 설정 시 드론이 천장에 닿음
+            throttle = 110  # 주의: 배터리 100%일 때, throttle 120 이상 설정 시 드론이 천장에 닿음
             if not pos: return
             x, y = pos[-1] # 드론 위치
 
@@ -312,3 +312,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
