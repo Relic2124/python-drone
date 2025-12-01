@@ -2,17 +2,17 @@ import cv2
 import numpy as np
 
 # --- 전역 변수 ---
-pre_ix, pre_iy = -1, -1
-ix, iy = -1, -1
+pre_target_x, pre_target_y = -1, -1
+target_x, target_y = -1, -1
 
 # --- 마우스 콜백 ---
 def draw_point(event, x, y, flags, param):
-    global ix, iy, drawing, points
+    global target_x, target_y, drawing, points
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
-        if ix==iy==-1: pos.append((x,y))
-        ix, iy = x, y
+        if target_x==target_y==-1: pos.append((x,y))
+        target_x, target_y = x, y
 
 # 파라미터(필요시 조절)
 THRESH     = 30             # 움직임 민감도(낮을수록 민감)
@@ -102,23 +102,23 @@ async def main():
         Kd = 0.4          # 미분 상수 (브레이크/진동 억제)
 
         # DEADBAND = 20     # 데드존: 목표 반경 20픽셀 안에 들어오면 움직이지 않음 (진동 방지)
-        MAX_SPEED = 10    # 안전을 위해 조종값의 최대 변화량을 제한 (100 ± 30 범위 내에서만 움직임)
+        MAX_SPEED = 10    # 안전을 위해 조종값의 최대 변화량을 제한 (100 ± 10 범위 내에서만 움직임)
 
         # 이전 오차를 기억하기 위한 변수 (초기화 필요)
         prev_error_x = 0
         prev_error_y = 0
         
         def get_data():
-            if ix == iy == -1: return
+            if target_x == target_y == -1: return
             nonlocal throttle, roll, pitch, prev_error_x, prev_error_y
-            global pre_ix, pre_iy
+            global pre_target_x, pre_target_y
             throttle = 115  # 주의: 베터리 100%일 때, throttle 120 이상 설정 시 드론이 천장에 닿음
             if not pos: return
             x, y = pos[-1] # 드론 위치
 
             # 1. 오차(Error) 계산: 목표점 - 현재위치
-            error_x = ix - x
-            error_y = iy - y
+            error_x = target_x - x
+            error_y = target_y - y
 
             # 2. 데드존 체크: 오차가 너무 작으면(이미 도착했으면) 0으로 처리해서 멈춤
             # if abs(error_x) < DEADBAND: error_x = 0
@@ -132,12 +132,12 @@ async def main():
             # [Roll 제어]
             # P항: error_x * Kp
             # D항: (error_x - prev_error_x) * Kd
-            if pre_ix == ix: control_roll = int((error_x * Kp) + ((error_x - prev_error_x) * Kd))
+            if pre_target_x == target_x: control_roll = int((error_x * Kp) + ((error_x - prev_error_x) * Kd))
             else: control_roll = int(error_x * Kp)
             
             # [Pitch 제어] (화면 좌표계 Y축 반대 주의)
             # 전진하려면 Pitch 증가, 화면 위쪽(y감소)이 전진. 따라서 부호 반전(-)
-            if pre_iy == iy: control_pitch = int((-error_y * Kp) + ((-error_y - prev_error_y) * Kd))
+            if pre_target_y == target_y: control_pitch = int((-error_y * Kp) + ((-error_y - prev_error_y) * Kd))
             else: control_pitch = int(-error_y * Kp)
 
             # 3. 현재 오차를 '이전 오차'로 저장 (다음 루프를 위해)
@@ -152,7 +152,7 @@ async def main():
             roll = rollMid + control_roll
             pitch = pitchMid + control_pitch
 
-            pre_ix, pre_iy = ix, iy
+            pre_target_x, pre_target_y = target_x, target_y
 
             #print(x, y, ix, iy, '\n')
 
@@ -241,10 +241,10 @@ async def main():
                         cv2.circle(frame, (cx, cy), 6, (0, 0, 255), -1)
                         #cv2.putText(frame, f"({cx},{cy})", (cx+8, cy-8),
                         #            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
-                        if not ix==iy==-1:
+                        if not target_x==target_y==-1:
                             xs.append(cx)
                             ys.append(cy)
-                cv2.circle(frame, (ix, iy), 6, (0, 0, 0), -1)
+                cv2.circle(frame, (target_x, target_y), 6, (0, 0, 0), -1)
                 if pos:
                     cv2.circle(frame, pos[-1], 6, (255, 0, 255), -1)
                     cv2.putText(frame, f"({pos[-1][0]},{pos[-1][1]})", (pos[-1][0]+8, pos[-1][1]-8),
