@@ -313,3 +313,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"에러 발생: {e}")
 
+
