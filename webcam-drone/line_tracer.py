@@ -277,7 +277,7 @@ async def main():
                 if points:
                     target_x, target_y = points[point_idx]
                     if pos and abs(pos[-1][0]-target_x)<20 and abs(pos[-1][1]-target_y)<20:
-                        point_idx = (point_idx+10)%len(points)
+                        point_idx = (point_idx+5)%len(points)
 
                 # [핵심] 웹캠 영상(frame) + 그림 레이어(canvas) 합성
                 # 검은색(0)은 더해도 변화가 없으므로 투명하게 보임
@@ -341,3 +341,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
