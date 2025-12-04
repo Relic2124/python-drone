@@ -214,7 +214,7 @@ async def main():
             raise RuntimeError("웹캠을 열 수 없습니다.")
 
         try:
-            print("[키] q: 종료, c: 기준 프레임 리셋")
+            print("[키] q: 종료, r: 녹화 시작/종료")
             while True:
                 ret, frame = cap.read()
                 if not ret:
@@ -291,3 +291,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
