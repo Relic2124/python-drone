@@ -19,8 +19,8 @@ def draw_point(event, x, y, flags, param):
 
     elif event == cv2.EVENT_MOUSEMOVE:
         if drawing:
-            cv2.line(canvas, (ix, iy), (x, y), (0, 255, 0), 2)
-            ix, iy = x, y
+            cv2.line(canvas, (target_x, target_y), (x, y), (0, 255, 0), 2)
+            target_x, target_y = x, y
             points.append((x, y))
 
     elif event == cv2.EVENT_LBUTTONUP:
@@ -341,4 +341,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
 
