@@ -236,8 +236,12 @@ async def main():
                         nx, ny = int(x), int(y)
                         pos.append((nx, ny))
                         if len(pos)>10: pos.pop(0)
+                    cv2.circle(annotated_frame, (target_x, target_y), 6, (0, 0, 0), -1)
+  
                     # 화면에 보여주기
                     cv2.imshow("Paint", annotated_frame)
+
+                    if recording: out.write(annotated_frame)  # 프레임 저장
 
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'): break # 종료
@@ -251,9 +255,6 @@ async def main():
                         recording = False
                         out.release()
                         print('녹화 종료')
-
-                if recording:
-                    out.write(frame)  # 프레임 저장
 
                 # 주기적으로 현재 상태 표시 (1초마다)
                 await asyncio.sleep(0.01)  # CPU 사용량 줄이기
@@ -290,5 +291,6 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
 
 
