@@ -234,9 +234,8 @@ async def main():
                         x, y, w, h = box
                         # 드론의 중심점 좌표 갱신
                         nx, ny = int(x), int(y)
-                        if pos and abs(pos[-1][0]-nx)<50 and abs(pos[-1][1]-ny)<50:
-                            pos.append((nx, ny))
-                            if len(pos)>10: pos.pop(0)
+                        pos.append((nx, ny))
+                        if len(pos)>10: pos.pop(0)
                     # 화면에 보여주기
                     cv2.imshow("Paint", annotated_frame)
 
@@ -291,4 +290,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         print(f"에러 발생: {e}")
+
 
